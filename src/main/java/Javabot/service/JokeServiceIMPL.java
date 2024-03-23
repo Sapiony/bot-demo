@@ -7,7 +7,6 @@ import Javabot.repository.JokeRepository;
 
 import java.util.List;
 import java.util.Optional;
-import java.util.Random;
 
 @Service
 public class JokeServiceIMPL implements JokeService {
@@ -63,16 +62,7 @@ public class JokeServiceIMPL implements JokeService {
         jokeRepository.deleteById(id);
     }
     @Override
-    public Joke getRandomJoke() {
-        List<Joke> allJokes = jokeRepository.findAll();
-        if (allJokes.isEmpty()) {
-            return null; // Если список шуток пустой, возвращаем null
-        }
-        // Генерируем случайный индекс от 0 до размера списка минус 1
-        Random random = new Random();
-        int randomIndex = random.nextInt(allJokes.size());
-        // Возвращаем случайную шутку из списка
-        return allJokes.get(randomIndex);
+    public void findRandomJoke() {
+        jokeRepository.findRandomJoke();
     }
-
 }

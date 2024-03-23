@@ -40,7 +40,7 @@ public class JokeController {
         jokeService.deleteJoke(id);
     }
     @GetMapping("/jokes/random")
-    public Joke getRandomJoke() {
-        return jokeService.getRandomJoke();
+    public void findRandomJoke() {
+        jokeService.findRandomJoke();
     }
 }

@@ -18,6 +18,7 @@ public interface JokeRepository extends JpaRepository<Joke, Integer> {
 
     @Query(value = "SELECT MAX(id) FROM Joke")
     Integer findMaxId();
+
     @Query(value = "SELECT * FROM Joke ORDER BY RAND() LIMIT 1", nativeQuery = true)
     String findRandomJoke();
 }

@@ -1,5 +1,6 @@
 package Javabot.service;
 import Javabot.model.Joke;
+import org.springframework.data.jpa.repository.Query;
 
 import java.util.List;
 
@@ -13,6 +14,6 @@ public interface JokeService {
     void updateJoke(int id, Joke updatedJoke);
 
     void deleteJoke(int id);
-
-    Joke getRandomJoke();
+    @Query(value = "SELECT * FROM Joke ORDER BY RAND() LIMIT 1", nativeQuery = true)
+    void findRandomJoke();
 }
