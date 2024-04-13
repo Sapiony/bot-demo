@@ -1,7 +1,11 @@
 package Javabot.service;
 
 import Javabot.model.Joke;
+import Javabot.model.JokeHistory;
+import Javabot.model.User;
+import Javabot.repository.JokeHistoryRepository;
 import Javabot.repository.JokeRepository;
+import Javabot.repository.UserRepository;
 import com.pengrad.telegrambot.TelegramBot;
 import com.pengrad.telegrambot.UpdatesListener;
 import com.pengrad.telegrambot.model.Update;
@@ -9,20 +13,22 @@ import com.pengrad.telegrambot.model.request.ParseMode;
 import com.pengrad.telegrambot.request.SendMessage;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-import Javabot.repository.JokeRepository;
 
-import java.sql.*;
-import java.util.List;
-import java.util.Optional;
-import java.util.Random;
+import java.time.LocalDateTime;
+import java.util.*;
 
 @Service
 public class TelegramBotService  {
     private final TelegramBot telegramBot;
     private final JokeRepository jokeRepository;
-    public TelegramBotService(@Autowired TelegramBot telegramBot, @Autowired JokeRepository jokeRepository) {
+    private final JokeHistoryRepository jokeHistoryRepository;
+    private final UserRepository userRepository;
+    private Joke currentJoke;
+    public TelegramBotService(@Autowired TelegramBot telegramBot, @Autowired JokeRepository jokeRepository,UserRepository userRepository,JokeHistoryRepository jokeHistoryRepository  ) {
         this.telegramBot = telegramBot;
         this.jokeRepository = jokeRepository;
+        this.userRepository = userRepository;
+        this.jokeHistoryRepository = jokeHistoryRepository;
         this.telegramBot.setUpdatesListener(updates -> {
             updates.forEach(this::buttonClickReact);
             return UpdatesListener.CONFIRMED_UPDATES_ALL;
@@ -30,6 +36,8 @@ public class TelegramBotService  {
     }
     private void buttonClickReact(Update update) {
         String text = update.message().text();
+        String username = update.message().from().username();
+
         if ("/help".equalsIgnoreCase(text)) {
             processHelpCommand(update);
         } else if ("/jokes".equalsIgnoreCase(text)) {
@@ -37,21 +45,58 @@ public class TelegramBotService  {
         } else if (text.startsWith("/jokes/")) {
             processJokeById(update, text);
         } else if ("/random".equalsIgnoreCase(text)){
-            sendRandomJoke(update);
+            // Проверяем, существует ли пользователь с заданным userId
+            if (!userRepository.existsByUsername(username)) {
+                addUserIfNotExists(username);
+            }
+            currentJoke = sendRandomJoke(update);
+            addJokeToHistory(currentJoke, username);
+        }
+        else if ("/top".equalsIgnoreCase(text)) {
+            sendTop5PopularJokes(update);
         }
     }
-
-    private void sendRandomJoke(Update update) {
+    private void addUserIfNotExists(String username) {
+        User newUser = new User();
+        newUser.setUsername(username);
+        userRepository.save(newUser);
+    }
+    private Joke sendRandomJoke(Update update) {
         // Извлекаем случайную шутку из репозитория
-        String randomJoke = jokeRepository.findRandomJoke();
+        Joke randomJoke = jokeRepository.findRandomJoke();
+        // Получаем текст шутки
+        randomJoke.setPopularity(randomJoke.getPopularity()+1);
+        jokeRepository.save(randomJoke);
+        String jokeText = randomJoke.getText();
         // Подготавливаем сообщение для отправки
-        SendMessage request = new SendMessage(update.message().chat().id(), randomJoke)
+        SendMessage request = new SendMessage(update.message().chat().id(), jokeText)
                 .parseMode(ParseMode.HTML)
                 .disableWebPagePreview(true)
                 .disableNotification(true)
                 .replyToMessageId(update.message().messageId());
+        randomJoke.setPopularity(randomJoke.getPopularity()+1);
         // Отправляем сообщение
         this.telegramBot.execute(request);
+        return randomJoke;
+    }
+
+    private void addJokeToHistory(Joke joke, String username) {
+        if (joke != null && username != null) {
+            // Ищем пользователя по его имени пользователя
+            User user = userRepository.findByUsername(username);
+
+            if (user != null) {
+                // Если пользователь найден, создаем запись в истории шуток
+                JokeHistory jokeHistory = new JokeHistory();
+                jokeHistory.setCallTime(LocalDateTime.now());
+                jokeHistory.setUser(user);
+                jokeHistory.setJoke(joke);
+                jokeHistoryRepository.save(jokeHistory);
+            } else {
+                // Если пользователь не найден, выбрасываем исключение
+                throw new RuntimeException("User not found");
+            }
+        }
     }
 
     private void processHelpCommand(Update update) {
@@ -108,6 +153,27 @@ public class TelegramBotService  {
         } else {
             // Анекдот с указанным ID не найден
             SendMessage request = new SendMessage(update.message().chat().id(), "Анекдот с указанным ID не найден.");
+            telegramBot.execute(request);
+        }
+    }
+    private void sendTop5PopularJokes(Update update) {
+        // Получаем список 5 популярных анекдотов
+        List<Joke> top5Jokes = jokeRepository.findTop5ByOrderByPopularityDesc();
+
+        if (top5Jokes.isEmpty()) {
+            // Если список пуст, отправляем сообщение об этом
+            SendMessage request = new SendMessage(update.message().chat().id(), "Список популярных анекдотов пуст.");
+            telegramBot.execute(request);
+        } else {
+            // Формируем сообщение со списком популярных анекдотов
+            StringBuilder jokeList = new StringBuilder("Топ 5 популярных анекдотов:\n");
+            for (int i = 0; i < top5Jokes.size(); i++) {
+                Joke joke = top5Jokes.get(i);
+                jokeList.append(i + 1).append(". ").append(joke.getText()).append("\n");
+            }
+
+            // Отправляем сообщение с популярными анекдотами
+            SendMessage request = new SendMessage(update.message().chat().id(), jokeList.toString());
             telegramBot.execute(request);
         }
     }

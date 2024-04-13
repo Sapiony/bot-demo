@@ -1,26 +1,23 @@
 package Javabot.model;
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.Setter;
+
+import java.util.List;
 
 @Setter
 @Getter
 @Entity
 public class Joke {
-    // Геттеры и сеттеры
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue(generator = "joke_id_seq", strategy = GenerationType.SEQUENCE)
+    @SequenceGenerator(name = "joke_id_seq", sequenceName = "joke_id_seq", allocationSize = 1)
     private int id;
+    @Column(name = "popularity")
+    private int popularity;
     private String text;
-
-    // Конструкторы, геттеры и сеттеры
-
     public Joke() {
     }
-
     public Joke(String text) {
         this.text = text;
     }

@@ -1,9 +1,14 @@
 package Javabot.controller;
+
 import Javabot.model.Joke;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import Javabot.service.JokeService;
-import java.util.List;
+
+import org.springframework.data.domain.Pageable;
 
 @RestController
 public class JokeController {
@@ -12,8 +17,8 @@ public class JokeController {
 
     // Метод для выдачи всех анекдотов
     @GetMapping("/jokes")
-    public List<Joke> getAllJokes() {
-        return jokeService.getAllJokes();
+    public Page<Joke> getAllJokes(int page, int size) {
+        return jokeService.getAllJokes(page, size);
     }
 
     // Метод для выдачи анекдота по ID
@@ -22,10 +27,16 @@ public class JokeController {
         return jokeService.getJokeById(id);
     }
 
-    // Метод для создания нового анекдота
-    @PostMapping("/jokes")
-    public void createJoke(@RequestBody Joke joke) {
-        jokeService.createJoke(joke);
+    @PostMapping("/add")
+    public ResponseEntity<String> addJoke(@RequestBody Joke joke) {
+        try {
+            jokeService.createJoke(joke);
+            return ResponseEntity.ok("Шутка успешно добавлена.");
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.badRequest().body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Ошибка при добавлении шутки.");
+        }
     }
 
     // Метод для изменения существующего анекдота
@@ -39,8 +50,9 @@ public class JokeController {
     public void deleteJoke(@PathVariable int id) {
         jokeService.deleteJoke(id);
     }
+
     @GetMapping("/jokes/random")
-    public void findRandomJoke() {
-        jokeService.findRandomJoke();
+    public Joke findRandomJoke() {
+        return jokeService.findRandomJoke();
     }
 }

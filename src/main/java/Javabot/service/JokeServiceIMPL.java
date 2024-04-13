@@ -1,26 +1,37 @@
 package Javabot.service;
 
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
 import Javabot.model.Joke;
+import Javabot.repository.JokeHistoryRepository;
 import Javabot.repository.JokeRepository;
+import Javabot.repository.UserRepository;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
 public class JokeServiceIMPL implements JokeService {
 
     private final JokeRepository jokeRepository;
+    private final UserRepository userRepository;
+    private final JokeHistoryRepository jokeHistoryRepository;
 
     @Autowired
-    public JokeServiceIMPL(JokeRepository jokeRepository) {
+    public JokeServiceIMPL(JokeRepository jokeRepository, UserRepository userRepository, JokeHistoryRepository jokeHistoryRepository) {
         this.jokeRepository = jokeRepository;
+        this.userRepository = userRepository;
+        this.jokeHistoryRepository = jokeHistoryRepository;
     }
 
     @Override
-    public List<Joke> getAllJokes() {
-        return jokeRepository.findAll();
+    public Page<Joke> getAllJokes(int page, int size) {
+        // Создаем объект Pageable с указанием номера страницы и размера страницы
+        Pageable pageable = PageRequest.of(page, size);
+        // Получаем страницу анекдотов из репозитория
+        return jokeRepository.findAll(pageable);
     }
 
     @Override
@@ -31,14 +42,8 @@ public class JokeServiceIMPL implements JokeService {
 
     @Override
     public void createJoke(Joke joke) {
-        // Проверяем, пуста ли база данных
-        if (jokeRepository.count() == 0) {
-            joke.setId(1);
-        } else {
-            // Иначе ищем максимальный ID и увеличиваем его на 1
-            Integer maxId = jokeRepository.findMaxId();
-            int nextId = (maxId != null) ? maxId + 1 : 1;
-            joke.setId(nextId);
+        if (joke.getText() == null || joke.getText().isEmpty()) {
+            throw new IllegalArgumentException("Шутка не может быть пустой.");
         }
         jokeRepository.save(joke);
     }
@@ -49,20 +54,16 @@ public class JokeServiceIMPL implements JokeService {
         if (!jokeRepository.existsById(id)) {
             throw new IllegalArgumentException("Joke with ID " + id + " does not exist.");
         }
-
-        // Set the ID for the updated joke
         updatedJoke.setId(id);
-
-        // Save the updated joke to the repository
         jokeRepository.save(updatedJoke);
     }
-
     @Override
     public void deleteJoke(int id) {
         jokeRepository.deleteById(id);
     }
+
     @Override
-    public void findRandomJoke() {
-        jokeRepository.findRandomJoke();
+    public Joke findRandomJoke() {
+        return jokeRepository.findRandomJoke();
     }
 }

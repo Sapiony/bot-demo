@@ -1,11 +1,13 @@
 package Javabot.service;
 import Javabot.model.Joke;
+import org.springframework.data.domain.Page;
 import org.springframework.data.jpa.repository.Query;
 
+import java.awt.print.Pageable;
 import java.util.List;
 
 public interface JokeService {
-    List<Joke> getAllJokes();
+    Page<Joke> getAllJokes(int page, int size);
 
     Joke getJokeById(int id);
 
@@ -14,6 +16,5 @@ public interface JokeService {
     void updateJoke(int id, Joke updatedJoke);
 
     void deleteJoke(int id);
-    @Query(value = "SELECT * FROM Joke ORDER BY RAND() LIMIT 1", nativeQuery = true)
-    void findRandomJoke();
+    Joke findRandomJoke();
 }
