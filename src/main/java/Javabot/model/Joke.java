@@ -10,9 +10,8 @@ import java.util.List;
 @Entity
 public class Joke {
     @Id
-    @GeneratedValue(generator = "joke_id_seq", strategy = GenerationType.SEQUENCE)
-    @SequenceGenerator(name = "joke_id_seq", sequenceName = "joke_id_seq", allocationSize = 1)
-    private int id;
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private long id;
     @Column(name = "popularity")
     private int popularity;
     private String text;

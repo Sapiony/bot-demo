@@ -36,24 +36,24 @@ public class TelegramBotService  {
     }
     private void buttonClickReact(Update update) {
         String text = update.message().text();
-        String username = update.message().from().username();
+        if (text != null) { // Проверяем, что переменная text не равна null
+            String username = update.message().from().username();
 
-        if ("/help".equalsIgnoreCase(text)) {
-            processHelpCommand(update);
-        } else if ("/jokes".equalsIgnoreCase(text)) {
-            sendAllJokes(update);
-        } else if (text.startsWith("/jokes/")) {
-            processJokeById(update, text);
-        } else if ("/random".equalsIgnoreCase(text)){
-            // Проверяем, существует ли пользователь с заданным userId
-            if (!userRepository.existsByUsername(username)) {
-                addUserIfNotExists(username);
+            if ("/help".equalsIgnoreCase(text)) {
+                processHelpCommand(update);
+            } else if ("/jokes".equalsIgnoreCase(text)) {
+                sendAllJokes(update);
+            } else if (text.startsWith("/jokes/")) {
+                processJokeById(update, text);
+            } else if ("/random".equalsIgnoreCase(text)){
+                // Проверяем, существует ли пользователь с заданным userId
+                if (!userRepository.existsByUsername(username)) {
+                    addUserIfNotExists(username);
+                }
+                sendRandomJoke(update);
+                currentJoke = sendRandomJoke(update);
+                addJokeToHistory(currentJoke, username);
             }
-            currentJoke = sendRandomJoke(update);
-            addJokeToHistory(currentJoke, username);
-        }
-        else if ("/top".equalsIgnoreCase(text)) {
-            sendTop5PopularJokes(update);
         }
     }
     private void addUserIfNotExists(String username) {
@@ -83,10 +83,9 @@ public class TelegramBotService  {
     private void addJokeToHistory(Joke joke, String username) {
         if (joke != null && username != null) {
             // Ищем пользователя по его имени пользователя
-            User user = userRepository.findByUsername(username);
-
-            if (user != null) {
-                // Если пользователь найден, создаем запись в истории шуток
+            Optional<User> userOptional = userRepository.findByUsername(username);
+            if (userOptional.isPresent()) {
+                User user = userOptional.get();
                 JokeHistory jokeHistory = new JokeHistory();
                 jokeHistory.setCallTime(LocalDateTime.now());
                 jokeHistory.setUser(user);

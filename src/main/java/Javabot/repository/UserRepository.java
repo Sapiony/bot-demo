@@ -1,12 +1,13 @@
 package Javabot.repository;
 
-import org.springframework.data.jpa.repository.JpaRepository;
 import Javabot.model.User;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.stereotype.Repository;
 
-@Repository
-public interface UserRepository extends JpaRepository<User, Long> {
-    boolean existsByUsername(String username);
+import java.util.Optional;
 
-    User findByUsername(String username);
+@Repository
+public interface UserRepository extends CrudRepository<User, Long> {
+    boolean existsByUsername(String username);
+    Optional<User> findByUsername(String username);
 }
