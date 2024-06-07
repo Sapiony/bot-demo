@@ -5,13 +5,14 @@ import Javabot.repository.JokeHistoryRepository;
 import Javabot.repository.JokeRepository;
 import Javabot.repository.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Scope;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.Optional;
-
+@Scope(scopeName = "prototype")
 @Service
 public class JokeServiceIMPL implements JokeService {
 

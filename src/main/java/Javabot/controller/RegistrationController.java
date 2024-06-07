@@ -13,7 +13,7 @@ public class RegistrationController {
     private final UserService userService;
 
     @PostMapping
-    public ResponseEntity<Void> registration(@RequestParam("username") String username, @RequestParam("password") String password) {
+    public ResponseEntity<String> registration(@RequestParam("username") String username, @RequestParam("password") String password) {
         userService.registration(username, password);
         return ResponseEntity.ok().build();
     }

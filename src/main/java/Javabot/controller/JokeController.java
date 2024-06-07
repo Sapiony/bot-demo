@@ -17,7 +17,17 @@ public class JokeController {
 
     // Метод для выдачи всех анекдотов
     @GetMapping("/jokes")
-    public Page<Joke> getAllJokes(int page, int size) {
+    public Page<Joke> getAllJokes(
+
+            @RequestParam(value = "page", required = false) Integer page,
+            @RequestParam(value = "size", required = false) Integer size) throws InterruptedException {
+            Thread.sleep(3000L);
+        if (page == null) {
+            page = 0; // значение по умолчанию
+        }
+        if (size == null) {
+            size = 10; // значение по умолчанию
+        }
         return jokeService.getAllJokes(page, size);
     }
 

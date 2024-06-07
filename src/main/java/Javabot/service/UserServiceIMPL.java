@@ -5,6 +5,7 @@ import Javabot.model.UserAuthority;
 import Javabot.model.UserRole;
 import Javabot.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.annotation.Scope;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
@@ -13,9 +14,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Collections;
-
+@Scope(scopeName = "prototype")
 @RequiredArgsConstructor
 @Service
+@Transactional
 public class UserServiceIMPL implements UserDetailsService, UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
@@ -26,15 +28,12 @@ public class UserServiceIMPL implements UserDetailsService, UserService {
     }
 
     @Override
-    @Transactional
     public void registration(String username, String password) {
-        // Шифрование пароля
-        String encodedPassword = passwordEncoder.encode(password);
 
         // Создание пользователя
         User user = new User();
         user.setUsername(username);
-        user.setPassword(encodedPassword);
+        user.setPassword(password);
         user.setEnabled(true);
         user.setExpired(false);
         user.setLocked(false);
